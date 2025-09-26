@@ -20,6 +20,19 @@ void cabecalho(int qtdItens) {
     printf("Itens na Mochila: %d/%d\n", qtdItens, MAX_ITENS);
 }
 
+// Ordenar itens por nome (Bubble Sort simples)
+void ordenarMochila(Item mochila[], int qtdItens) {
+    for (int i = 0; i < qtdItens - 1; i++) {
+        for (int j = 0; j < qtdItens - i - 1; j++) {
+            if (strcmp(mochila[j].nome, mochila[j + 1].nome) > 0) {
+                Item temp = mochila[j];
+                mochila[j] = mochila[j + 1];
+                mochila[j + 1] = temp;
+            }
+        }
+    }
+}
+
 // Função para exibir os itens da mochila
 void listarItens(Item mochila[], int qtdItens) {
     cabecalho(qtdItens);
@@ -28,6 +41,8 @@ void listarItens(Item mochila[], int qtdItens) {
         printf("\nA mochila está vazia!\n");
         return;
     }
+
+    ordenarMochila(mochila, qtdItens);
 
     printf("\n%-15s | %-10s | %-10s\n", "NOME", "TIPO", "QUANTIDADE");
     printf("--------------------------------------------------\n");
@@ -39,6 +54,26 @@ void listarItens(Item mochila[], int qtdItens) {
                mochila[i].quantidade);
     }
     printf("--------------------------------------------------\n");
+}
+
+// Função de busca binária por nome
+int buscaBinariaPorNome(Item mochila[], int qtdItens, char nome[]) {
+    int inicio = 0, fim = qtdItens - 1;
+
+    while (inicio <= fim) {
+        int meio = (inicio + fim) / 2;
+        int cmp = strcmp(mochila[meio].nome, nome);
+
+        if (cmp == 0) {
+            return meio; // encontrado
+        }
+        if (cmp < 0) {
+            inicio = meio + 1;
+        } else {
+            fim = meio - 1;
+        }
+    }
+    return -1; // não encontrado
 }
 
 // Função para remover item da mochila
@@ -53,18 +88,13 @@ void removerItem(Item mochila[], int *qtdItens) {
     fgets(nome, TAM_NOME, stdin);
     nome[strcspn(nome, "\n")] = '\0';
 
-    int encontrado = -1;
-    for (int i = 0; i < *qtdItens; i++) {
-        if (strcmp(mochila[i].nome, nome) == 0) {
-            encontrado = i;
-            break;
-        }
-    }
+    ordenarMochila(mochila, *qtdItens);
+    int pos = buscaBinariaPorNome(mochila, *qtdItens, nome);
 
-    if (encontrado == -1) {
+    if (pos == -1) {
         printf("\nItem '%s' não encontrado!\n", nome);
     } else {
-        for (int i = encontrado; i < *qtdItens - 1; i++) {
+        for (int i = pos; i < *qtdItens - 1; i++) {
             mochila[i] = mochila[i + 1];
         }
         (*qtdItens)--;
@@ -72,35 +102,29 @@ void removerItem(Item mochila[], int *qtdItens) {
     }
 }
 
-// Função para alterar a quantidade de um item
-void alterarQuantidade(Item mochila[], int qtdItens) {
+// Função para buscar item por nome
+void buscarItem(Item mochila[], int qtdItens) {
     if (qtdItens == 0) {
         printf("\nA mochila está vazia!\n");
         return;
     }
 
     char nome[TAM_NOME];
-    printf("\nDigite o nome do item que deseja alterar: ");
+    printf("\nDigite o nome do item que deseja buscar: ");
     fgets(nome, TAM_NOME, stdin);
     nome[strcspn(nome, "\n")] = '\0';
 
-    int encontrado = -1;
-    for (int i = 0; i < qtdItens; i++) {
-        if (strcmp(mochila[i].nome, nome) == 0) {
-            encontrado = i;
-            break;
-        }
-    }
+    ordenarMochila(mochila, qtdItens);
+    int pos = buscaBinariaPorNome(mochila, qtdItens, nome);
 
-    if (encontrado == -1) {
-        printf("\nItem '%s' não encontrado!\n", nome);
+    if (pos == -1) {
+        printf("\nItem '%s' não encontrado na mochila.\n", nome);
     } else {
-        int novaQtd;
-        printf("Nova quantidade para '%s': ", mochila[encontrado].nome);
-        scanf("%d", &novaQtd);
-        getchar();
-        mochila[encontrado].quantidade = novaQtd;
-        printf("\nQuantidade atualizada com sucesso!\n");
+        printf("\nItem encontrado!\n");
+        printf("Nome: %s | Tipo: %s | Quantidade: %d\n",
+               mochila[pos].nome,
+               mochila[pos].tipo,
+               mochila[pos].quantidade);
     }
 }
 
@@ -111,10 +135,10 @@ int main() {
 
     do {
         cabecalho(qtdItens);
-        printf("\n1 - Adicionar Novo Item\n");
-        printf("2 - Listar Itens\n");
-        printf("3 - Remover Item\n");
-        printf("4 - Alterar Quantidade\n");
+        printf("\n1 - Adicionar Item (Loot)\n");
+        printf("2 - Remover Item\n");
+        printf("3 - Listar Itens na Mochila\n");
+        printf("4 - Buscar Item por Nome\n");
         printf("0 - Sair\n");
         printf("Opcao: ");
         scanf("%d", &opcao);
@@ -146,13 +170,13 @@ int main() {
             printf("\nItem '%s' adicionado com sucesso!\n", novo.nome);
         }
         else if (opcao == 2) {
-            listarItens(mochila, qtdItens);
-        }
-        else if (opcao == 3) {
             removerItem(mochila, &qtdItens);
         }
+        else if (opcao == 3) {
+            listarItens(mochila, qtdItens);
+        }
         else if (opcao == 4) {
-            alterarQuantidade(mochila, qtdItens);
+            buscarItem(mochila, qtdItens);
         }
 
         if (opcao != 0) {
